@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Livro de Vendas</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    --bg: #fdf1f5;
+    --surface: #ffffff;
+    --surface-2: #fbe3ec;
+    --line: #f3cddb;
+    --gold: #e0779a;
+    --gold-soft: #c65578;
+    --ink: #000000;
+    --ink-dim: #000000;
+    --danger: #d1495b;
+  }
+
+  *{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 20% 0%, rgba(224,119,154,0.10), transparent 40%),
+      radial-gradient(circle at 100% 100%, rgba(224,119,154,0.07), transparent 40%);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', sans-serif;
+    min-height: 100vh;
+    padding-bottom: calc(95px + env(safe-area-inset-bottom));
+  }
+
+  .wrap{ max-width: 480px; margin: 0 auto; padding: 0 16px; }
+
+  header{
+    padding: 28px 16px 18px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  header .eyebrow{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--ink);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .backup-row{
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+  .backup-btn{
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.03em;
+    padding: 7px 10px;
+    border-radius: 7px;
+    cursor: pointer;
+  }
+  .backup-btn:active{ background: var(--surface-2); }
+  header h1{
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: 28px;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+
+  /* Receipt-style total */
+  .receipt{
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 20px 20px 18px;
+    margin: 4px 0 22px;
+    overflow: hidden;
+  }
+  .receipt::before{
+    content: "";
+    position: absolute;
+    top: -8px; left: 0; right: 0;
+    height: 16px;
+    background-image: radial-gradient(circle at 8px 8px, var(--bg) 7px, transparent 7px);
+    background-size: 16px 16px;
+    background-repeat: repeat-x;
+  }
+  .receipt-label{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-dim);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .receipt-total{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 40px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-top: 4px;
+    letter-spacing: -0.01em;
+  }
+  .receipt-sub{
+    display:flex;
+    justify-content: space-between;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--line);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-dim);
+  }
+
+  .section-title{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    margin: 20px 0 10px;
+    display:flex;
+    justify-content: space-between;
+    align-items:center;
+  }
+
+  .expand-btn{
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 6px 10px;
+    border-radius: 7px;
+    cursor: pointer;
+  }
+  .expand-btn:active{ background: var(--line); }
+  .expand-btn svg{ width: 12px; height: 12px; }
+
+  /* Maletas (períodos personalizados) */
+  .maletas-scroll{
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 2px 2px 4px;
+    margin-bottom: 4px;
+  }
+  .maleta-chip{
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    padding: 9px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .maleta-chip.active{
+    background: var(--gold);
+    border-color: var(--gold);
+  }
+  .maleta-chip .maleta-edit{
+    opacity: 0.5;
+    font-size: 12px;
+    padding-left: 4px;
+  }
+  .maleta-chip .maleta-edit:active{ opacity: 1; }
+  .maleta-chip .maleta-finish{
+    opacity: 0.7;
+    font-size: 12px;
+    padding-left: 4px;
+    color: #2f8f5b;
+  }
+  .maleta-chip .maleta-finish:active{ opacity: 1; }
+  .maleta-chip .maleta-x{
+    opacity: 0.5;
+    font-size: 12px;
+    padding-left: 2px;
+  }
+  .maleta-chip .maleta-x:active{ color: var(--danger); opacity: 1; }
+  .maleta-add{
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: transparent;
+    border: 1px dashed var(--line);
+    color: var(--ink);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    padding: 9px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .maleta-add:active{ background: var(--surface-2); }
+
+  .folder-btn{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.03em;
+    padding: 6px 10px;
+    border-radius: 7px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .folder-btn:active{ background: var(--line); }
+
+  .folder-card{
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 10px;
+    cursor: pointer;
+  }
+  .folder-card:active{ background: var(--surface-2); }
+  .folder-card-top{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .folder-card-period{
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .folder-card-total{
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .folder-card-sub{
+    font-size: 11.5px;
+    color: var(--ink-dim);
+    margin-top: 4px;
+  }
+  .folder-back{
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    line-height: 1;
+    margin-right: 8px;
+  }
+  .folder-back:active{ background: var(--line); }
+  .folder-detail-total{
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 700;
+    font-size: 20px;
+    margin: 4px 0 16px;
+  }
+
+  /* Fullscreen modal */
+  .modal{
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 20;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    display: flex;
+    flex-direction: column;
+  }
+  .modal.open{ opacity: 1; pointer-events: auto; }
+  .modal-header{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 16px;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+  .modal-header h2{
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    margin: 0;
+  }
+  .modal-close{
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    line-height: 1;
+  }
+  .modal-close:active{ background: var(--line); }
+  .modal-body{
+    flex: 1;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 12px 16px 24px;
+  }
+  .modal-body table.ledger{ min-width: 720px; font-size: 14px; }
+  .modal-body table.ledger td.col-nome{
+    max-width: none;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+  }
+  .modal-body table.ledger td, .modal-body table.ledger th{ padding: 13px 14px; }
+
+  /* Ledger rows */
+  /* Spreadsheet-style table */
+  .sheet-frame{
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--surface);
+  }
+  .table-scroll{
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  table.ledger{
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 640px;
+    font-size: 13px;
+  }
+  table.ledger thead th{
+    position: sticky;
+    top: 0;
+    background: var(--surface-2);
+    color: var(--ink-dim);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  table.ledger th.col-valor, table.ledger td.col-valor{ text-align: right; }
+  table.ledger td{
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  table.ledger td.col-nome{
+    font-weight: 600;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .tag-parcelas{
+    display: inline-block;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 1px 5px;
+    font-size: 10.5px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  table.ledger td.col-valor{
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  table.ledger tbody tr:last-child td{ border-bottom: none; }
+  table.ledger tbody tr:active{ background: var(--surface-2); }
+  table.ledger td.col-del{
+    text-align: center;
+    color: var(--ink-dim);
+    cursor: pointer;
+    font-size: 15px;
+  }
+  table.ledger td.col-del:active{ color: var(--danger); }
+  table.ledger tfoot td{
+    padding: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 700;
+    font-size: 14px;
+    border-top: 1px double var(--gold);
+    background: var(--surface-2);
+  }
+  table.ledger tfoot td.col-total-label{
+    color: var(--ink-dim);
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+  }
+  table.ledger tfoot td.col-valor{ color: var(--ink); text-align: right; }
+
+  .empty{
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--ink-dim);
+    font-size: 14px;
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+  }
+
+  /* FAB */
+  .fab{
+    position: fixed;
+    bottom: calc(18px + env(safe-area-inset-bottom));
+    right: 18px;
+    left: auto;
+    transform: none;
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: var(--gold);
+    color: var(--ink);
+    border: none;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-weight: 600;
+    font-size: 30px;
+    line-height: 1;
+    box-shadow: 0 8px 20px rgba(198,85,120,0.35);
+    cursor: pointer;
+    z-index: 5;
+  }
+  .fab:active{ background: var(--gold-soft); }
+
+  /* Bottom sheet */
+  .overlay{
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 10;
+  }
+  .overlay.open{ opacity: 1; pointer-events: auto; }
+
+  .sheet{
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    max-width: 480px;
+    margin: 0 auto;
+    background: var(--surface);
+    border-radius: 18px 18px 0 0;
+    border: 1px solid var(--line);
+    border-bottom: none;
+    padding: 20px 18px calc(20px + env(safe-area-inset-bottom));
+    transform: translateY(100%);
+    transition: transform 0.25s cubic-bezier(.32,.72,0,1);
+    z-index: 11;
+    max-height: 88vh;
+    overflow-y: auto;
+  }
+  .sheet.open{ transform: translateY(0); }
+  .sheet-handle{
+    width: 36px; height: 4px;
+    background: var(--line);
+    border-radius: 2px;
+    margin: 0 auto 16px;
+  }
+  .sheet h2{
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    margin: 0 0 16px;
+  }
+
+  label{
+    display:block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    margin: 14px 0 6px;
+  }
+  label:first-of-type{ margin-top: 0; }
+
+  input, select{
+    width: 100%;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px 12px;
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 15px;
+    outline: none;
+  }
+  input:focus, select:focus{ border-color: var(--gold); }
+  input[type="date"]{ color-scheme: light; }
+
+  select{
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' stroke='%23b98aa0' stroke-width='1.5' fill='none' stroke-linecap='round'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+  }
+
+  .row2{ display:flex; gap: 10px; }
+  .row2 > div{ flex:1; }
+
+  .save-btn{
+    margin-top: 20px;
+    width: 100%;
+    background: var(--gold);
+    color: var(--ink);
+    border: none;
+    border-radius: 10px;
+    padding: 15px;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+  }
+  .save-btn:active{ background: var(--gold-soft); }
+  .cancel-link{
+    display:block;
+    text-align:center;
+    margin-top: 12px;
+    color: var(--ink-dim);
+    font-size: 13px;
+    background:none;
+    border:none;
+    cursor:pointer;
+  }
+
+  .loading{ text-align:center; color: var(--ink-dim); padding: 30px; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Livro de vendas</div>
+    <div class="backup-row">
+      <button class="backup-btn" id="exportBtn">⬇ Exportar backup</button>
+      <button class="backup-btn" id="importBtn">⬆ Importar backup</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none;">
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="receipt">
+      <div class="receipt-label">Total acumulado</div>
+      <div class="receipt-total" id="totalValue">R$ 0,00</div>
+      <div class="receipt-sub">
+        <span id="countLabel">0 vendas</span>
+        <span id="dateLabel">—</span>
+      </div>
+    </div>
+
+    <div class="section-title">
+      <span>Maletas (períodos)</span>
+      <button class="folder-btn" id="folderBtn">📁 Finalizadas (<span id="folderCount">0</span>)</button>
+    </div>
+    <div class="maletas-scroll" id="maletaChips"></div>
+
+    <div class="section-title">
+      <span>Lançamentos</span>
+      <button class="expand-btn" id="expandBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+        Ampliar
+      </button>
+    </div>
+
+    <div class="sheet-frame">
+      <div class="table-scroll">
+        <div id="list"><div class="loading">Carregando…</div></div>
+      </div>
+    </div>
+    <p style="font-size:11px;color:var(--ink-dim);text-align:center;margin-top:8px;margin-bottom:30px;">
+      Arraste a tabela pros lados para ver todas as colunas →
+    </p>
+  </div>
+</div>
+
+<button class="fab" id="openBtn" aria-label="Nova venda">+</button>
+
+<div class="overlay" id="overlay"></div>
+<div class="sheet" id="sheet">
+  <div class="sheet-handle"></div>
+  <h2 id="sheetTitle">Nova venda</h2>
+
+  <label for="fNome">Nome</label>
+  <input id="fNome" type="text" placeholder="Nome do cliente" autocomplete="off">
+
+  <div class="row2">
+    <div>
+      <label for="fData">Data</label>
+      <input id="fData" type="date">
+    </div>
+    <div>
+      <label for="fCodigo">Código</label>
+      <input id="fCodigo" type="text" placeholder="Ex: 0231" autocomplete="off">
+    </div>
+  </div>
+
+  <label for="fForma">Forma de pagamento</label>
+  <select id="fForma">
+    <option value="Pix">Pix</option>
+    <option value="Dinheiro">Dinheiro</option>
+    <option value="Cartão de débito">Cartão de débito</option>
+    <option value="Cartão de crédito">Cartão de crédito</option>
+    <option value="Boleto">Boleto</option>
+    <option value="Outro">Outro</option>
+  </select>
+
+  <div id="parcelasGroup" style="display:none;">
+    <label for="fParcelas">Número de parcelas</label>
+    <select id="fParcelas">
+      <option value="1">À vista (1x)</option>
+      <option value="2">2x</option>
+      <option value="3">3x</option>
+      <option value="4">4x</option>
+      <option value="5">5x</option>
+      <option value="6">6x</option>
+      <option value="7">7x</option>
+      <option value="8">8x</option>
+      <option value="9">9x</option>
+      <option value="10">10x</option>
+      <option value="11">11x</option>
+      <option value="12">12x</option>
+    </select>
+  </div>
+
+  <label for="fValor">Valor (R$)</label>
+  <input id="fValor" type="number" inputmode="decimal" step="0.01" placeholder="0,00">
+
+  <button class="save-btn" id="saveBtn">Salvar venda</button>
+  <button class="cancel-link" id="cancelBtn">Cancelar</button>
+</div>
+
+<div class="sheet" id="maletaSheet">
+  <div class="sheet-handle"></div>
+  <h2>Nova maleta</h2>
+
+  <div class="row2">
+    <div id="mInicioGroup">
+      <label for="mInicio">Data inicial</label>
+      <input id="mInicio" type="date">
+    </div>
+    <div>
+      <label for="mFim">Data final <span style="opacity:0.6;text-transform:none;letter-spacing:0;">(opcional)</span></label>
+      <input id="mFim" type="date">
+    </div>
+  </div>
+  <p id="maletaHint" style="font-size:11px;color:var(--ink-dim);margin:8px 0 0;">
+    Deixe em branco se ainda não souber quando a maleta fecha. Você poderá definir a data final depois.
+  </p>
+
+  <button class="save-btn" id="saveMaletaBtn">Criar maleta</button>
+  <button class="cancel-link" id="cancelMaletaBtn">Cancelar</button>
+</div>
+
+<div class="modal" id="modal">
+  <div class="modal-header">
+    <h2>Todas as vendas</h2>
+    <button class="modal-close" id="modalCloseBtn">✕</button>
+  </div>
+  <div class="modal-body">
+    <div id="listExpanded"><div class="loading">Carregando…</div></div>
+  </div>
+</div>
+
+<div class="modal" id="folderModal">
+  <div class="modal-header">
+    <div style="display:flex;align-items:center;">
+      <button class="folder-back" id="folderBackBtn" style="display:none;">←</button>
+      <h2 id="folderModalTitle">Maletas finalizadas</h2>
+    </div>
+    <button class="modal-close" id="folderCloseBtn">✕</button>
+  </div>
+  <div class="modal-body">
+    <div id="folderContent"></div>
+  </div>
+</div>
+
+<script>
+window.addEventListener('error', function(ev){
+  try{
+    var box = document.getElementById('fatalError');
+    if(!box){
+      box = document.createElement('div');
+      box.id = 'fatalError';
+      box.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#7a1f2b;color:#fff;font-family:monospace;font-size:12px;padding:10px 14px;z-index:9999;';
+      document.body.prepend(box);
+    }
+    box.textContent = 'Erro: ' + (ev.message || 'algo deu errado ao carregar.');
+  }catch(e){}
+});
+
+let storageOK = true;
+try{
+  localStorage.setItem('__test__','1');
+  localStorage.removeItem('__test__');
+}catch(e){
+  storageOK = false;
+}
+
+let sales = [];
+let maletas = [];
+let activeMaletaId = null;
+let editingMaletaId = null;
+let editingId = null;
+
+const listEl = document.getElementById('list');
+const listExpandedEl = document.getElementById('listExpanded');
+const totalEl = document.getElementById('totalValue');
+const countEl = document.getElementById('countLabel');
+const dateEl = document.getElementById('dateLabel');
+const sheet = document.getElementById('sheet');
+const maletaSheet = document.getElementById('maletaSheet');
+const overlay = document.getElementById('overlay');
+const modal = document.getElementById('modal');
+const maletaChipsEl = document.getElementById('maletaChips');
+const folderModal = document.getElementById('folderModal');
+const folderContentEl = document.getElementById('folderContent');
+const folderBackBtn = document.getElementById('folderBackBtn');
+const folderModalTitle = document.getElementById('folderModalTitle');
+const folderCountEl = document.getElementById('folderCount');
+let folderSelectedId = null;
+
+function brl(n){
+  return n.toLocaleString('pt-BR', { style:'currency', currency:'BRL' });
+}
+function fmtDate(iso){
+  if(!iso) return '';
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+async function loadSales(){
+  if(!storageOK){
+    sales = [];
+    maletas = [];
+    showStorageWarning();
+    render();
+    return;
+  }
+  try{
+    const raw = localStorage.getItem('sales-list');
+    sales = raw ? JSON.parse(raw) : [];
+  }catch(e){
+    sales = [];
+  }
+  try{
+    const rawM = localStorage.getItem('maletas-list');
+    maletas = rawM ? JSON.parse(rawM) : [];
+  }catch(e){
+    maletas = [];
+  }
+  render();
+}
+
+function showStorageWarning(){
+  if(document.getElementById('storageWarning')) return;
+  const box = document.createElement('div');
+  box.id = 'storageWarning';
+  box.style.cssText = 'background:#7a1f2b;color:#fff;font-size:11.5px;padding:10px 14px;text-align:center;';
+  box.innerHTML = 'Este navegador não está salvando os dados automaticamente aqui. Abra o arquivo pelo <b>Safari</b> em vez do Chrome, ou use o botão "Exportar backup" antes de fechar.';
+  document.body.prepend(box);
+}
+
+async function persist(){
+  if(!storageOK) return;
+  try{
+    localStorage.setItem('sales-list', JSON.stringify(sales));
+  }catch(e){
+    console.error('Erro ao salvar', e);
+    storageOK = false;
+    showStorageWarning();
+  }
+}
+
+async function persistMaletas(){
+  if(!storageOK) return;
+  try{
+    localStorage.setItem('maletas-list', JSON.stringify(maletas));
+  }catch(e){
+    console.error('Erro ao salvar maletas', e);
+    storageOK = false;
+    showStorageWarning();
+  }
+}
+
+function fmtShort(iso){
+  if(!iso) return '';
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}`;
+}
+
+function getSalesForMaleta(m){
+  if(!m) return sales;
+  return sales.filter(v=> v.data >= m.inicio && (!m.fim || v.data <= m.fim));
+}
+
+function buildTableHtml(filtered, emptyMsg){
+  if(!filtered.length){
+    return `<div class="empty">${emptyMsg}</div>`;
+  }
+  const total = filtered.reduce((s,v)=> s + Number(v.valor||0), 0);
+  const sorted = [...filtered].sort((a,b)=> (b.data||'').localeCompare(a.data||'') || b.id - a.id);
+  const rows = sorted.map(v => `
+    <tr data-id="${v.id}">
+      <td class="col-nome">${escapeHtml(v.nome || '—')}</td>
+      <td class="col-data">${fmtDate(v.data)}</td>
+      <td class="col-codigo">${v.codigo ? escapeHtml(v.codigo) : '—'}</td>
+      <td class="col-forma">${escapeHtml(v.forma)}${(v.forma === 'Cartão de crédito' && v.parcelas > 1) ? ` <span class="tag-parcelas">${v.parcelas}x</span>` : ''}</td>
+      <td class="col-valor">${brl(Number(v.valor||0))}</td>
+      <td class="col-del" data-del="${v.id}">✕</td>
+    </tr>
+  `).join('');
+
+  return `
+    <table class="ledger">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Data</th>
+          <th>Código</th>
+          <th>Forma de pagamento</th>
+          <th class="col-valor">Valor</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+      <tfoot>
+        <tr>
+          <td class="col-total-label" colspan="4">Total</td>
+          <td class="col-valor">${brl(total)}</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+  `;
+}
+
+function renderMaletas(){
+  folderCountEl.textContent = maletas.filter(m=> m.fim).length;
+
+  const openMaletas = maletas.filter(m=> !m.fim);
+  const chips = [`<button class="maleta-chip ${activeMaletaId===null?'active':''}" data-maleta="todas">Todas</button>`];
+  openMaletas.forEach(m=>{
+    chips.push(`
+      <button class="maleta-chip ${activeMaletaId===m.id?'active':''}" data-maleta="${m.id}">
+        Maleta • ${fmtShort(m.inicio)} - em aberto
+        <span class="maleta-finish" data-maleta-finish="${m.id}">✓</span>
+        <span class="maleta-edit" data-maleta-edit="${m.id}">✎</span>
+        <span class="maleta-x" data-maleta-del="${m.id}">✕</span>
+      </button>
+    `);
+  });
+  chips.push(`<button class="maleta-add" id="addMaletaChip">+ Nova maleta</button>`);
+  maletaChipsEl.innerHTML = chips.join('');
+
+  maletaChipsEl.querySelectorAll('[data-maleta]').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      if(e.target.closest('[data-maleta-del]') || e.target.closest('[data-maleta-edit]') || e.target.closest('[data-maleta-finish]')) return;
+      const val = btn.getAttribute('data-maleta');
+      activeMaletaId = val === 'todas' ? null : Number(val);
+      render();
+    });
+  });
+  maletaChipsEl.querySelectorAll('[data-maleta-edit]').forEach(pencil=>{
+    pencil.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const id = Number(pencil.getAttribute('data-maleta-edit'));
+      const m = maletas.find(x=> x.id === id);
+      if(!m) return;
+      editingMaletaId = id;
+      openMaletaSheet(m, 'editar');
+    });
+  });
+  maletaChipsEl.querySelectorAll('[data-maleta-finish]').forEach(chk=>{
+    chk.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const id = Number(chk.getAttribute('data-maleta-finish'));
+      const m = maletas.find(x=> x.id === id);
+      if(!m) return;
+      editingMaletaId = id;
+      openMaletaSheet(m, 'finalizar');
+    });
+  });
+  maletaChipsEl.querySelectorAll('[data-maleta-del]').forEach(x=>{
+    x.addEventListener('click', async (e)=>{
+      e.stopPropagation();
+      const id = Number(x.getAttribute('data-maleta-del'));
+      maletas = maletas.filter(m=> m.id !== id);
+      if(activeMaletaId === id) activeMaletaId = null;
+      await persistMaletas();
+      render();
+    });
+  });
+  document.getElementById('addMaletaChip').addEventListener('click', ()=> openMaletaSheet(null, 'nova'));
+}
+
+function render(){
+  renderMaletas();
+
+  const activeMaleta = maletas.find(m=> m.id === activeMaletaId);
+  const filtered = getSalesForMaleta(activeMaleta);
+
+  const total = filtered.reduce((s,v)=> s + Number(v.valor||0), 0);
+  totalEl.textContent = brl(total);
+  countEl.textContent = `${filtered.length} ${filtered.length===1?'venda':'vendas'}`;
+  dateEl.textContent = activeMaleta
+    ? (activeMaleta.fim ? `${fmtDate(activeMaleta.inicio)} a ${fmtDate(activeMaleta.fim)}` : `Desde ${fmtDate(activeMaleta.inicio)} (em aberto)`)
+    : 'Todas as datas';
+
+  const emptyMsg = activeMaleta
+    ? 'Nenhuma venda nesse período ainda.'
+    : 'Nenhuma venda lançada ainda.<br>Toque em "+ Nova venda" para começar.';
+  const tableHtml = buildTableHtml(filtered, emptyMsg);
+  listEl.innerHTML = tableHtml;
+  listExpandedEl.innerHTML = tableHtml;
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function toggleParcelasField(){
+  const forma = document.getElementById('fForma').value;
+  const group = document.getElementById('parcelasGroup');
+  group.style.display = (forma === 'Cartão de crédito') ? '' : 'none';
+}
+
+function openSheet(){
+  document.getElementById('fData').value = new Date().toISOString().slice(0,10);
+  toggleParcelasField();
+  sheet.classList.add('open');
+  overlay.classList.add('open');
+}
+function closeSheet(){
+  sheet.classList.remove('open');
+  overlay.classList.remove('open');
+  document.getElementById('fNome').value = '';
+  document.getElementById('fCodigo').value = '';
+  document.getElementById('fValor').value = '';
+  document.getElementById('fForma').selectedIndex = 0;
+  document.getElementById('fParcelas').selectedIndex = 0;
+  document.getElementById('parcelasGroup').style.display = 'none';
+}
+document.getElementById('fForma').addEventListener('change', toggleParcelasField);
+
+let maletaSheetMode = 'nova';
+
+function openMaletaSheet(existing, mode){
+  maletaSheetMode = mode || 'nova';
+  const titleEl = maletaSheet.querySelector('h2');
+  const saveBtn = document.getElementById('saveMaletaBtn');
+  const inicioGroup = document.getElementById('mInicioGroup');
+  const hint = document.getElementById('maletaHint');
+
+  if(maletaSheetMode === 'finalizar'){
+    titleEl.textContent = 'Finalizar maleta';
+    saveBtn.textContent = 'Finalizar maleta';
+    inicioGroup.style.display = 'none';
+    hint.textContent = 'Escolha a data em que essa maleta foi fechada. Ela vai para a pasta de finalizadas.';
+    document.getElementById('mInicio').value = existing.inicio || '';
+    document.getElementById('mFim').value = existing.fim || '';
+  }else if(existing){
+    titleEl.textContent = 'Editar maleta';
+    saveBtn.textContent = 'Salvar alterações';
+    inicioGroup.style.display = '';
+    hint.textContent = 'Deixe a data final em branco se ainda não souber quando a maleta fecha.';
+    document.getElementById('mInicio').value = existing.inicio || '';
+    document.getElementById('mFim').value = existing.fim || '';
+  }else{
+    titleEl.textContent = 'Nova maleta';
+    saveBtn.textContent = 'Criar maleta';
+    inicioGroup.style.display = '';
+    hint.textContent = 'Deixe a data final em branco se ainda não souber quando a maleta fecha. Você poderá definir depois.';
+    document.getElementById('mInicio').value = '';
+    document.getElementById('mFim').value = '';
+  }
+  maletaSheet.classList.add('open');
+  overlay.classList.add('open');
+}
+function closeMaletaSheet(){
+  maletaSheet.classList.remove('open');
+  overlay.classList.remove('open');
+  editingMaletaId = null;
+  maletaSheetMode = 'nova';
+}
+function closeAnySheet(){
+  closeSheet();
+  closeMaletaSheet();
+}
+
+document.getElementById('openBtn').addEventListener('click', openSheet);
+document.getElementById('cancelBtn').addEventListener('click', closeSheet);
+document.getElementById('cancelMaletaBtn').addEventListener('click', closeMaletaSheet);
+overlay.addEventListener('click', closeAnySheet);
+
+document.getElementById('saveMaletaBtn').addEventListener('click', async ()=>{
+  const inicio = document.getElementById('mInicio').value;
+  const fim = document.getElementById('mFim').value;
+
+  if(maletaSheetMode === 'finalizar'){
+    if(!fim){
+      alert('Escolha a data final para finalizar a maleta.');
+      return;
+    }
+    const m = maletas.find(x=> x.id === editingMaletaId);
+    if(fim < m.inicio){
+      alert('A data final não pode ser antes da data inicial.');
+      return;
+    }
+    m.fim = fim;
+    if(activeMaletaId === m.id) activeMaletaId = null;
+  }else if(editingMaletaId){
+    if(!inicio){
+      alert('Escolha ao menos a data inicial.');
+      return;
+    }
+    if(fim && inicio > fim){
+      alert('A data final não pode ser antes da data inicial.');
+      return;
+    }
+    const m = maletas.find(x=> x.id === editingMaletaId);
+    m.inicio = inicio;
+    m.fim = fim || null;
+  }else{
+    if(!inicio){
+      alert('Escolha ao menos a data inicial.');
+      return;
+    }
+    if(fim && inicio > fim){
+      alert('A data final não pode ser antes da data inicial.');
+      return;
+    }
+    const id = Date.now();
+    maletas.push({ id, inicio, fim: fim || null });
+    activeMaletaId = id;
+  }
+  editingMaletaId = null;
+  await persistMaletas();
+  render();
+  closeMaletaSheet();
+});
+
+document.getElementById('expandBtn').addEventListener('click', ()=>{
+  modal.classList.add('open');
+});
+document.getElementById('modalCloseBtn').addEventListener('click', ()=>{
+  modal.classList.remove('open');
+});
+
+function renderFolderList(){
+  folderSelectedId = null;
+  folderModalTitle.textContent = 'Maletas finalizadas';
+  folderBackBtn.style.display = 'none';
+
+  const finished = maletas.filter(m=> m.fim).sort((a,b)=> b.fim.localeCompare(a.fim));
+  if(!finished.length){
+    folderContentEl.innerHTML = '<div class="empty">Nenhuma maleta finalizada ainda.</div>';
+    return;
+  }
+  folderContentEl.innerHTML = finished.map(m=>{
+    const total = getSalesForMaleta(m).reduce((s,v)=> s + Number(v.valor||0), 0);
+    const qtd = getSalesForMaleta(m).length;
+    return `
+      <div class="folder-card" data-folder-open="${m.id}">
+        <div class="folder-card-top">
+          <div class="folder-card-period">${fmtDate(m.inicio)} — ${fmtDate(m.fim)}</div>
+          <div class="folder-card-total">${brl(total)}</div>
+        </div>
+        <div class="folder-card-sub">${qtd} ${qtd===1?'venda':'vendas'}</div>
+      </div>
+    `;
+  }).join('');
+
+  folderContentEl.querySelectorAll('[data-folder-open]').forEach(card=>{
+    card.addEventListener('click', ()=>{
+      folderSelectedId = Number(card.getAttribute('data-folder-open'));
+      renderFolderDetail(folderSelectedId);
+    });
+  });
+}
+
+function renderFolderDetail(id){
+  const m = maletas.find(x=> x.id === id);
+  if(!m){ renderFolderList(); return; }
+  folderModalTitle.textContent = `${fmtDate(m.inicio)} — ${fmtDate(m.fim)}`;
+  folderBackBtn.style.display = '';
+
+  const filtered = getSalesForMaleta(m);
+  const total = filtered.reduce((s,v)=> s + Number(v.valor||0), 0);
+  const tableHtml = buildTableHtml(filtered, 'Nenhuma venda nesse período.');
+
+  folderContentEl.innerHTML = `
+    <div class="folder-detail-total">${brl(total)}</div>
+    ${tableHtml}
+  `;
+}
+
+function openFolderModal(){
+  renderFolderList();
+  folderModal.classList.add('open');
+}
+function closeFolderModal(){
+  folderModal.classList.remove('open');
+}
+
+document.getElementById('folderBtn').addEventListener('click', openFolderModal);
+document.getElementById('folderCloseBtn').addEventListener('click', closeFolderModal);
+folderBackBtn.addEventListener('click', renderFolderList);
+
+document.getElementById('saveBtn').addEventListener('click', async ()=>{
+  const nome = document.getElementById('fNome').value.trim();
+  const data = document.getElementById('fData').value;
+  const codigo = document.getElementById('fCodigo').value.trim();
+  const forma = document.getElementById('fForma').value;
+  const valor = parseFloat(document.getElementById('fValor').value);
+  const parcelas = (forma === 'Cartão de crédito')
+    ? parseInt(document.getElementById('fParcelas').value, 10)
+    : null;
+
+  if(!nome || !data || isNaN(valor)){
+    alert('Preencha ao menos nome, data e valor.');
+    return;
+  }
+
+  sales.push({ id: Date.now(), nome, data, codigo, forma, valor, parcelas });
+  await persist();
+  render();
+  closeSheet();
+});
+
+async function handleDelete(e){
+  const delId = e.target.getAttribute('data-del');
+  if(delId){
+    sales = sales.filter(v => String(v.id) !== delId);
+    await persist();
+    render();
+    if(folderModal.classList.contains('open')){
+      if(folderSelectedId) renderFolderDetail(folderSelectedId);
+      else renderFolderList();
+    }
+  }
+}
+listEl.addEventListener('click', handleDelete);
+listExpandedEl.addEventListener('click', handleDelete);
+folderContentEl.addEventListener('click', handleDelete);
+
+document.getElementById('exportBtn').addEventListener('click', ()=>{
+  const backup = {
+    exportado_em: new Date().toISOString(),
+    sales,
+    maletas
+  };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `backup-vendas-${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('importBtn').addEventListener('click', ()=>{
+  document.getElementById('importFile').click();
+});
+
+document.getElementById('importFile').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async (evt)=>{
+    try{
+      const data = JSON.parse(evt.target.result);
+      if(!Array.isArray(data.sales) || !Array.isArray(data.maletas)){
+        alert('Arquivo de backup inválido.');
+        return;
+      }
+      const modo = confirm(
+        'Clique OK para SUBSTITUIR todos os dados atuais pelo backup.\nClique Cancelar para ADICIONAR o backup aos dados já existentes.'
+      );
+      if(modo){
+        sales = data.sales;
+        maletas = data.maletas;
+      }else{
+        const existingIds = new Set(sales.map(s=>s.id));
+        data.sales.forEach(s=>{ if(!existingIds.has(s.id)) sales.push(s); });
+        const existingMaletaIds = new Set(maletas.map(m=>m.id));
+        data.maletas.forEach(m=>{ if(!existingMaletaIds.has(m.id)) maletas.push(m); });
+      }
+      await persist();
+      await persistMaletas();
+      render();
+      alert('Backup importado com sucesso!');
+    }catch(err){
+      alert('Não foi possível ler esse arquivo. Verifique se é um backup válido.');
+    }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+});
+
+loadSales();
+</script>
+
+</body>
+</html>
